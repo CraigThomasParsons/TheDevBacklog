@@ -16,6 +16,8 @@ The Backlog (Agent-Native, Agile-Compatible) : A Laravel code generator that aut
 composer install
 ```
 
+For detailed usage instructions, see [USAGE.md](USAGE.md).
+
 ## Usage
 
 ### Using the CLI Tool (Recommended)
