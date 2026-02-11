@@ -18,6 +18,22 @@ composer install
 
 ## Usage
 
+### Using the CLI Tool (Recommended)
+
+The easiest way to use the generator is with the CLI tool and a configuration file:
+
+1. Copy the example config file:
+```bash
+cp config.example.php config.php
+```
+
+2. Edit `config.php` to define your resources
+
+3. Run the generator:
+```bash
+php generate.php config.php
+```
+
 ### Basic Example
 
 ```php
@@ -143,6 +159,12 @@ Run examples:
 ```bash
 php examples/generate_simple.php
 php examples/generate_blog.php
+```
+
+Or use the CLI with the comprehensive config:
+
+```bash
+php generate.php config.example.php
 ```
 
 ## Output Structure
