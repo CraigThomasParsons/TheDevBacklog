@@ -32,6 +32,9 @@ class {$name} extends Controller
 {
     /**
      * Display a listing of the resource.
+     * 
+     * Note: For production use with large datasets, consider adding pagination:
+     * return response()->json(Model::paginate(15));
      */
     public function index(): JsonResponse
     {

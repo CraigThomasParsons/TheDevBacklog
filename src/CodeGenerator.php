@@ -18,6 +18,9 @@ class CodeGenerator
 
     private string $outputDir;
 
+    /**
+     * @param string $outputDir Output directory path (relative to script execution or absolute)
+     */
     public function __construct(string $outputDir = './output')
     {
         $this->migrationGenerator = new MigrationGenerator();

@@ -15,6 +15,13 @@ use TheDevBacklog\CodeGenerator;
 // Get config file from command line argument or use default
 $configFile = $argv[1] ?? 'config.php';
 
+// Validate config file path for security
+$configFile = basename($configFile); // Prevent path traversal
+if (!preg_match('/^[a-zA-Z0-9_.-]+\.php$/', $configFile)) {
+    echo "Error: Invalid configuration file name. Only alphanumeric, dash, dot, and underscore are allowed.\n";
+    exit(1);
+}
+
 if (!file_exists($configFile)) {
     echo "Error: Configuration file '{$configFile}' not found.\n";
     echo "Usage: php generate.php [config_file]\n";

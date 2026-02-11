@@ -20,13 +20,21 @@ class RouteGenerator implements GeneratorInterface
         $routeLine = "Route::apiResource('{$resource}', {$controller}::class)";
 
         if ($only) {
-            $onlyMethods = is_array($only) ? implode("', '", $only) : $only;
-            $routeLine .= "->only(['{$onlyMethods}'])";
+            if (is_array($only)) {
+                $onlyMethods = "'" . implode("', '", $only) . "'";
+            } else {
+                $onlyMethods = "'{$only}'";
+            }
+            $routeLine .= "->only([{$onlyMethods}])";
         }
 
         if ($except) {
-            $exceptMethods = is_array($except) ? implode("', '", $except) : $except;
-            $routeLine .= "->except(['{$exceptMethods}'])";
+            if (is_array($except)) {
+                $exceptMethods = "'" . implode("', '", $except) . "'";
+            } else {
+                $exceptMethods = "'{$except}'";
+            }
+            $routeLine .= "->except([{$exceptMethods}])";
         }
 
         $routeLine .= ";";
