@@ -1,6 +1,135 @@
 # TheDevBacklog
+**The Backlog (Agent-Native, Agile-Compatible)** : Attempting to make an A.I. agent framework to run through Tasks and execute them from a backlog.
 
-The Backlog (Agent-Native, Agile-Compatible) : A Laravel code generator that automatically creates migrations, Eloquent models with relationships, REST controllers, seeders, and API routes.
+The Backlog contains A Laravel code generator that automatically creates migrations, Eloquent models with relationships, REST controllers, seeders, and API routes.
+
+---
+
+# The Developer Backlog is a context-controlled development factory, but the middle part of it.
+An attempt to build an AI-driven backlog system where agents pull structured work like developers in a sprint.
+
+---
+
+## Overview
+
+TheDevBacklog is a Laravel-based system designed to model a modern agile backlog while enabling AI agents to operate within it safely and deterministically.
+
+Instead of giving agents full autonomy, this project introduces a structured hierarchy:
+
+```
+Epics
+  ↓
+Stories
+  ↓
+Tasks   ← Mason emits these
+  ↓
+Runs    ← Goose executes these
+```
+
+The goal is to treat AI agents like disciplined developers:
+
+* They pull one task at a time
+* They execute within constraints
+* They produce observable evidence
+* Retries are explicit and bounded
+
+No hidden loops. No magic autonomy.
+
+---
+
+## Philosophy
+
+This project separates concerns intentionally:
+
+* **Backlog = Intent**
+* **Queue = Commitment**
+* **Run = Evidence**
+* **Evaluation = Truth (future: Vera)**
+
+Agents do not decide success.
+Agents do not redefine scope.
+Agents execute one task at a time.
+
+The filesystem and database are the source of truth.
+
+---
+
+## Goals
+
+### 1. Build an Agent-Native Backlog
+
+Create a backlog system where both humans and AI agents can interact with Epics, Stories, and Tasks.
+
+### 2. Enforce Agile Discipline
+
+Model a sprint workflow where:
+
+* Mason fills the backlog
+* Ready Tasks enter a `task_queue`
+* Goose pulls exactly one task like a developer
+
+### 3. Separate Planning, Execution, and Judgment
+
+* Mason → planning & task decomposition
+* Goose → execution (one task per run)
+* Vera (future seperate repo) → verification & confidence scoring
+
+### 4. Explicit and Bounded Retries
+
+Retries are:
+
+* Limited
+* Auditable
+* Confidence-aware
+* Never automatic or silent
+
+### 5. Laravel Queues as an Agent Sprint System
+
+Use Laravel queues not just as background jobs,
+but as a structured “agent sprint engine.”
+
+---
+
+## Current Scope
+
+This repository currently includes:
+
+* Epics
+* Stories
+* Tasks
+* Runs
+* Basic relationships and API structure
+
+No execution engine yet.
+No evaluation layer yet.
+No autonomous retries yet.
+
+This repo defines **structure first**.
+
+---
+
+## Future Direction
+
+Planned additions:
+
+* `task_queue` claim protocol
+* Atomic task claiming (like a developer pulling work)
+* Run history tracking
+* Confidence decay logic
+* Vera integration (in a separate repository)
+* Agent sprint dashboards
+
+---
+
+## Why This Exists
+
+Most AI agent frameworks collapse planning, execution, and judgment into a single loop.
+
+This project deliberately splits them apart.
+
+It is an experiment in building:
+
+> Agile for machines.
 
 ## Features
 
