@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'qaqueue' => [
+        'base_url' => env('QAQUEUE_BASE_URL', 'http://host.docker.internal:8008'),
+        'timeout_seconds' => env('QAQUEUE_TIMEOUT_SECONDS', 10),
+    ],
+
 ];

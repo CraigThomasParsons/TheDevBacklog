@@ -64,6 +64,21 @@ class Story extends Model
         return $query->whereHas('status', fn ($q) => $q->where('key', $statusKey));
     }
 
+    public function scopeInProgress(Builder $query): Builder
+    {
+        return $query->whereHas('status', fn ($q) => $q->where('key', 'in_progress'));
+    }
+
+    public function scopeCompleted(Builder $query): Builder
+    {
+        return $query->whereHas('status', fn ($q) => $q->where('key', 'completed'));
+    }
+
+    public function scopeReadyForDev(Builder $query): Builder
+    {
+        return $query->ready()->orderByDesc('priority')->orderBy('created_at');
+    }
+
     public function isReady(): bool
     {
         return !empty($this->title) 
