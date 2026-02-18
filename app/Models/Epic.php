@@ -15,6 +15,7 @@ class Epic extends Model
         'title',
         'summary',
         'epic_status_id',
+        'chat_project_id',
     ];
 
     public function status(): BelongsTo

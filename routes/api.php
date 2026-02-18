@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\StoryController;
+use App\Http\Controllers\Api\ProjectProjectionSyncController;
 
 /**
  * Story API routes for Mason agent integration
@@ -38,6 +39,9 @@ Route::prefix('stories')->group(function () {
     // POST /api/stories/{id}/release
     Route::post('/{story}/release', [StoryController::class, 'release']);
 });
+
+// Canonical Projects registry webhook for upsert/delete projection events.
+Route::post('/projects/projection-sync', [ProjectProjectionSyncController::class, 'store']);
 
 /**
  * Health check endpoint

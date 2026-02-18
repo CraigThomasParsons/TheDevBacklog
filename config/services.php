@@ -40,4 +40,12 @@ return [
         'timeout_seconds' => env('QAQUEUE_TIMEOUT_SECONDS', 10),
     ],
 
+    'projects_registry' => [
+        'base_url' => env('PROJECTS_API_BASE_URL', 'http://localhost:8083'),
+        'token' => env('PROJECTS_API_TOKEN'),
+        'timeout_seconds' => env('PROJECTS_API_TIMEOUT_SECONDS', 15),
+        'webhook_token' => env('PROJECTS_REGISTRY_WEBHOOK_TOKEN'),
+        'sync_lag_warning_minutes' => env('PROJECTS_SYNC_LAG_WARNING_MINUTES', 20),
+    ],
+
 ];

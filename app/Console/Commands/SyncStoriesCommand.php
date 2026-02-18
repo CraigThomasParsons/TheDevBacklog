@@ -153,6 +153,7 @@ class SyncStoriesCommand extends Command
                 'title' => $remoteStory->epic_title,
                 'summary' => $remoteStory->epic_summary,
                 'epic_status_id' => $activeStatus->id,
+                'chat_project_id' => $remoteStory->chat_project_id,
             ]
         );
     }
