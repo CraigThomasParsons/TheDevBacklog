@@ -12,7 +12,7 @@ class StoryController extends Controller
     public function show(Story $story)
     {
         // Load related context so the detail view is complete in one request.
-        $story->load(['status', 'persona', 'epic', 'sprints']);
+        $story->load(['status', 'persona', 'epic.project', 'sprints', 'tasks']);
 
         return view('stories.show', compact('story'));
     }

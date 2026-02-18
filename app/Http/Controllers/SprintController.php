@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MasonRunControl;
 use App\Models\Sprint;
 use App\Models\SprintStatus;
 use App\Models\Story;
+use App\Models\StoryStatus;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class SprintController extends Controller
 {
@@ -35,12 +39,19 @@ class SprintController extends Controller
 
         // Return early with empty columns when no sprint is available yet.
         if ($currentSprint === null) {
+            $masonRunControl = MasonRunControl::singleton();
+            $masonHeartbeatFresh = $masonRunControl->last_heartbeat_at
+                ? $masonRunControl->last_heartbeat_at->gt(now()->subSeconds(300))
+                : false;
+
             return view('sprints.current', [
                 'currentSprint' => null,
                 'toDoStories' => collect(),
                 'inProgressStories' => collect(),
                 'inReviewStories' => collect(),
                 'doneStories' => collect(),
+                'masonRunControl' => $masonRunControl,
+                'masonHeartbeatFresh' => $masonHeartbeatFresh,
             ]);
         }
 
@@ -72,12 +83,19 @@ class SprintController extends Controller
             $toDoStories->push($story);
         }
 
+        $masonRunControl = MasonRunControl::singleton();
+        $masonHeartbeatFresh = $masonRunControl->last_heartbeat_at
+            ? $masonRunControl->last_heartbeat_at->gt(now()->subSeconds(300))
+            : false;
+
         return view('sprints.current', compact(
             'currentSprint',
             'toDoStories',
             'inProgressStories',
             'inReviewStories',
-            'doneStories'
+            'doneStories',
+            'masonRunControl',
+            'masonHeartbeatFresh'
         ));
     }
 
@@ -229,5 +247,112 @@ class SprintController extends Controller
         return response($markdown)
             ->header('Content-Type', 'text/markdown')
             ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
+    }
+
+    /**
+     * Persist current sprint board changes (column/status + order).
+     */
+    public function updateBoard(Request $request, Sprint $sprint): JsonResponse
+    {
+        if ($sprint->is_frozen) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Sprint is frozen and cannot be modified.',
+            ], 409);
+        }
+
+        $validated = $request->validate([
+            'columns' => ['required', 'array'],
+            'columns.todo' => ['required', 'array'],
+            'columns.in_progress' => ['required', 'array'],
+            'columns.in_review' => ['required', 'array'],
+            'columns.done' => ['required', 'array'],
+            'columns.todo.*' => ['integer'],
+            'columns.in_progress.*' => ['integer'],
+            'columns.in_review.*' => ['integer'],
+            'columns.done.*' => ['integer'],
+        ]);
+
+        $columnMap = [
+            'todo' => ['ready', 'draft'],
+            'in_progress' => ['in_progress', 'doing'],
+            'in_review' => ['in_review', 'review', 'qa', 'in_testing', 'testing'],
+            'done' => ['done', 'completed', 'passed'],
+        ];
+
+        $statusByColumn = [];
+        foreach ($columnMap as $columnKey => $candidateKeys) {
+            $status = $this->resolveStatusByPriority($candidateKeys);
+            if (! $status) {
+                return response()->json([
+                    'success' => false,
+                    'error' => "No story status found for board column '{$columnKey}'.",
+                ], 422);
+            }
+            $statusByColumn[$columnKey] = $status;
+        }
+
+        $sprintStoryIds = $sprint->stories()->pluck('stories.id')->map(fn ($id) => (int) $id)->values();
+        $incomingStoryIds = collect($validated['columns'])
+            ->flatten()
+            ->map(fn ($id) => (int) $id)
+            ->values();
+
+        // Guard clause: prevent losing stories due to partial payloads.
+        if ($incomingStoryIds->count() !== $sprintStoryIds->count()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Board payload does not include the full sprint story set.',
+            ], 422);
+        }
+
+        if ($incomingStoryIds->duplicates()->isNotEmpty()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Board payload contains duplicate story ids.',
+            ], 422);
+        }
+
+        if ($incomingStoryIds->diff($sprintStoryIds)->isNotEmpty()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Board payload contains stories outside this sprint.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($validated, $sprint, $statusByColumn): void {
+            $sortOrder = 0;
+
+            foreach (['todo', 'in_progress', 'in_review', 'done'] as $columnKey) {
+                $status = $statusByColumn[$columnKey];
+                $storyIds = collect($validated['columns'][$columnKey])->map(fn ($id) => (int) $id);
+
+                foreach ($storyIds as $storyId) {
+                    Story::query()
+                        ->where('id', $storyId)
+                        ->update(['story_status_id' => $status->id]);
+
+                    $sprint->stories()->updateExistingPivot($storyId, ['sort_order' => $sortOrder]);
+                    $sortOrder++;
+                }
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Board updated.',
+        ]);
+    }
+
+    private function resolveStatusByPriority(array $keys): ?StoryStatus
+    {
+        foreach ($keys as $key) {
+            $status = StoryStatus::byKey($key);
+            if ($status) {
+                return $status;
+            }
+        }
+
+        return null;
     }
 }

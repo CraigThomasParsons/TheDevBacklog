@@ -28,14 +28,20 @@
         </div>
         <div class="flex gap-2">
             @unless ($sprint->is_frozen)
-                <form method="POST" action="{{ route('sprints.freeze', $sprint) }}" 
-                      onsubmit="return confirm('Are you sure? Once frozen, the sprint cannot be edited.');">
-                    @csrf
-                    <button type="submit" 
-                            class="px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
-                        🔒 Freeze Sprint
-                    </button>
-                </form>
+                <div class="relative group">
+                    <form method="POST" action="{{ route('sprints.freeze', $sprint) }}" 
+                          onsubmit="return confirm('Are you sure? Once frozen, the sprint cannot be edited.');">
+                        @csrf
+                        <button type="submit"
+                                title="Freezes editing and marks this sprint Ready. Current Sprint prioritizes Active, then Ready, then Draft."
+                                class="px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
+                            🔒 Freeze Sprint
+                        </button>
+                    </form>
+                    <div class="pointer-events-none absolute right-0 top-full mt-2 z-20 hidden w-72 rounded-md bg-gray-900 px-3 py-2 text-xs text-white shadow-lg group-hover:block group-focus-within:block">
+                        Freezes editing and marks this sprint <strong>Ready</strong>. The Current Sprint board picks <strong>Active</strong> first, then <strong>Ready</strong>, then <strong>Draft</strong>.
+                    </div>
+                </div>
                 <a href="{{ route('sprints.edit', $sprint) }}" 
                    class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
                     Edit

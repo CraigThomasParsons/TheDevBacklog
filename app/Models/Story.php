@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 
 class Story extends Model
@@ -19,6 +20,7 @@ class Story extends Model
         'epic_id',
         'persona_id',
         'story_status_id',
+        'story_type',
         'priority',
         'est_points',
     ];
@@ -47,6 +49,11 @@ class Story extends Model
     {
         return $this->belongsToMany(Sprint::class, 'sprint_stories')
             ->withPivot('sort_order');
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(StoryTask::class)->orderBy('sort_order');
     }
 
     public function scopeReady(Builder $query): Builder
@@ -99,5 +106,10 @@ class Story extends Model
         }
 
         return false;
+    }
+
+    public function isEnabler(): bool
+    {
+        return ($this->story_type ?? 'feature') === 'enabler';
     }
 }

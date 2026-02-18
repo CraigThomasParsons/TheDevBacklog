@@ -28,6 +28,11 @@ class Epic extends Model
         return $this->hasMany(Story::class);
     }
 
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class, 'chat_project_id');
+    }
+
     public function getStoryCountAttribute(): int
     {
         return $this->stories()->count();

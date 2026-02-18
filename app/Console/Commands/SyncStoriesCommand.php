@@ -30,6 +30,13 @@ class SyncStoriesCommand extends Command
         $this->info('Syncing stories from WritersRoom...');
 
         try {
+            // Guard clause: syncing epics requires at least one local epic status.
+            $defaultEpicStatus = EpicStatus::byKey('active') ?? EpicStatus::query()->first();
+            if (! $defaultEpicStatus) {
+                $this->error('No epic statuses found locally. Seed statuses first.');
+                return self::FAILURE;
+            }
+
             // Build query for WritersRoom stories
             $query = DB::connection('writersroom')
                 ->table('stories')
@@ -82,7 +89,7 @@ class SyncStoriesCommand extends Command
 
             foreach ($remoteStories as $remoteStory) {
                 // Ensure we have the epic locally
-                $epic = $this->syncEpic($remoteStory);
+                $epic = $this->syncEpic($remoteStory, (int) $defaultEpicStatus->id);
                 
                 // Ensure we have the persona locally
                 $persona = $this->syncPersona($remoteStory);
@@ -120,8 +127,14 @@ class SyncStoriesCommand extends Command
                 $synced++;
             }
 
+            // Consolidate historical duplicate epics so epic drafts stay clean.
+            $mergedEpics = $this->consolidateDuplicateEpics();
+
             $this->newLine();
             $this->info("Sync complete: {$synced} stories ({$created} created, {$updated} updated)");
+            if ($mergedEpics > 0) {
+                $this->info("Consolidated {$mergedEpics} duplicate epic record(s).");
+            }
 
             return self::SUCCESS;
 
@@ -135,27 +148,39 @@ class SyncStoriesCommand extends Command
     /**
      * Sync epic from WritersRoom to DevBacklog
      */
-    protected function syncEpic(object $remoteStory): ?Epic
+    protected function syncEpic(object $remoteStory, int $epicStatusId): ?Epic
     {
         if (!$remoteStory->epic_id) {
             return null;
         }
 
-        // Get active status locally
-        $activeStatus = EpicStatus::byKey('active');
-        if (!$activeStatus) {
-            $activeStatus = EpicStatus::first();
+        // Prefer stable project+title matching to avoid duplicate epics with the same scope.
+        $epic = Epic::query()
+            ->where('chat_project_id', $remoteStory->chat_project_id)
+            ->where('title', $remoteStory->epic_title)
+            ->first();
+
+        if (! $epic) {
+            $epic = Epic::find((int) $remoteStory->epic_id);
         }
 
-        return Epic::updateOrCreate(
-            ['id' => $remoteStory->epic_id],
-            [
+        if ($epic) {
+            $epic->update([
                 'title' => $remoteStory->epic_title,
                 'summary' => $remoteStory->epic_summary,
-                'epic_status_id' => $activeStatus->id,
+                'epic_status_id' => $epicStatusId,
                 'chat_project_id' => $remoteStory->chat_project_id,
-            ]
-        );
+            ]);
+
+            return $epic;
+        }
+
+        return Epic::create([
+            'title' => $remoteStory->epic_title,
+            'summary' => $remoteStory->epic_summary,
+            'epic_status_id' => $epicStatusId,
+            'chat_project_id' => $remoteStory->chat_project_id,
+        ]);
     }
 
     /**
@@ -176,5 +201,45 @@ class SyncStoriesCommand extends Command
                 'is_active' => true,
             ]
         );
+    }
+
+    /**
+     * Merge duplicate epics by (chat_project_id, title), keeping the oldest id.
+     */
+    protected function consolidateDuplicateEpics(): int
+    {
+        $duplicateGroups = Epic::query()
+            ->select('chat_project_id', 'title', DB::raw('COUNT(*) as duplicate_count'))
+            ->whereNotNull('chat_project_id')
+            ->groupBy('chat_project_id', 'title')
+            ->havingRaw('COUNT(*) > 1')
+            ->get();
+
+        $deletedCount = 0;
+
+        foreach ($duplicateGroups as $group) {
+            $epics = Epic::query()
+                ->where('chat_project_id', $group->chat_project_id)
+                ->where('title', $group->title)
+                ->orderBy('id')
+                ->get();
+
+            $canonicalEpic = $epics->first();
+            if (! $canonicalEpic) {
+                continue;
+            }
+
+            foreach ($epics->skip(1) as $duplicateEpic) {
+                // Re-link stories so sprint/backlog views resolve to one epic record.
+                Story::query()
+                    ->where('epic_id', $duplicateEpic->id)
+                    ->update(['epic_id' => $canonicalEpic->id]);
+
+                $duplicateEpic->delete();
+                $deletedCount++;
+            }
+        }
+
+        return $deletedCount;
     }
 }

@@ -5,6 +5,7 @@ use App\Http\Controllers\SprintController;
 use App\Http\Controllers\BacklogController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\EpicDraftController;
+use App\Http\Controllers\MasonRunStateController;
 use App\Http\Controllers\StoryController;
 
 /**
@@ -35,6 +36,8 @@ Route::post('/epic-drafts/{epic}/move-to-sprint', [EpicDraftController::class, '
  * Sprint resource routes for CRUD operations
  */
 Route::resource('sprints', SprintController::class);
+Route::post('/sprints/{sprint}/board', [SprintController::class, 'updateBoard'])
+    ->name('sprints.board.update');
 
 /**
  * Current sprint board route - visual scrum-style flow for active sprint execution.
@@ -45,6 +48,13 @@ Route::get('/current-sprint', [SprintController::class, 'current'])->name('sprin
  * Story details route - supports opening ticket details in a new tab from the board.
  */
 Route::get('/stories/{story}', [StoryController::class, 'show'])->name('stories.show');
+
+/**
+ * Mason runtime state dashboard.
+ */
+Route::get('/mason/state', [MasonRunStateController::class, 'index'])->name('mason.state');
+Route::post('/mason/state/start', [MasonRunStateController::class, 'start'])->name('mason.state.start');
+Route::post('/mason/state/stop', [MasonRunStateController::class, 'stop'])->name('mason.state.stop');
 
 /**
  * Sprint freeze action - locks sprint from further changes

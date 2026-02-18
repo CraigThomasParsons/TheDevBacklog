@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\StoryController;
+use App\Http\Controllers\Api\MasonRunStateController;
 use App\Http\Controllers\Api\ProjectProjectionSyncController;
 
 /**
@@ -18,6 +19,10 @@ Route::prefix('stories')->group(function () {
     // List stories with optional status filter
     // GET /api/stories?status=ready
     Route::get('/', [StoryController::class, 'index']);
+
+    // Trigger a sync of ready stories from WritersRoom
+    // POST /api/stories/sync-ready
+    Route::post('/sync-ready', [StoryController::class, 'syncReady']);
     
     // Get single story with epic and acceptance criteria
     // GET /api/stories/{id}
@@ -31,14 +36,32 @@ Route::prefix('stories')->group(function () {
     // POST /api/stories/{id}/complete
     Route::post('/{story}/complete', [StoryController::class, 'complete']);
 
+    // Reprioritize story for sprint execution ordering
+    // POST /api/stories/{id}/priority
+    Route::post('/{story}/priority', [StoryController::class, 'updatePriority']);
+
     // Submit decomposed tasks to QAQueue
     // POST /api/stories/{id}/tasks
     Route::post('/{story}/tasks', [StoryController::class, 'submitTasks']);
+
+    // List persisted Mason tasks for story
+    // GET /api/stories/{id}/tasks
+    Route::get('/{story}/tasks', [StoryController::class, 'tasks']);
+
+    // Update a single persisted task state by external task id
+    // POST /api/stories/{id}/tasks/{externalTaskId}/state
+    Route::post('/{story}/tasks/{externalTaskId}/state', [StoryController::class, 'updateTaskState']);
     
     // Release a claimed story back to ready
     // POST /api/stories/{id}/release
     Route::post('/{story}/release', [StoryController::class, 'release']);
 });
+
+// Mason runtime status endpoint for dashboard + automation introspection.
+Route::get('/mason/run-state', [MasonRunStateController::class, 'show']);
+Route::post('/mason/run-state/start', [MasonRunStateController::class, 'start']);
+Route::post('/mason/run-state/stop', [MasonRunStateController::class, 'stop']);
+Route::post('/mason/run-state/heartbeat', [MasonRunStateController::class, 'heartbeat']);
 
 // Canonical Projects registry webhook for upsert/delete projection events.
 Route::post('/projects/projection-sync', [ProjectProjectionSyncController::class, 'store']);

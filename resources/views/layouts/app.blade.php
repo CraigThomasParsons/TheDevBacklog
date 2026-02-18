@@ -74,11 +74,28 @@
                                       {{ request()->routeIs('backlog.*') ? 'border-green-400 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700' }}">
                                 Backlog
                             </a>
+                            <a href="{{ route('mason.state') }}"
+                               class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out
+                                      {{ request()->routeIs('mason.state') ? 'border-green-400 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700' }}">
+                                Mason State
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         </nav>
+
+        <!-- Dark Mode Toggle -->
+        <div x-data="{ 
+                darkMode: localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+            }" 
+            x-init="$watch('darkMode', val => { localStorage.setItem('theme', val ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', val); }); document.documentElement.classList.toggle('dark', darkMode);"
+            class="fixed top-4 right-4 z-50 flex items-center space-x-2 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+            <button @click="darkMode = !darkMode" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
+                <span x-show="darkMode">🌙</span>
+                <span x-show="!darkMode">☀️</span>
+            </button>
+        </div>
 
         <!-- Page Header -->
         @hasSection('header')

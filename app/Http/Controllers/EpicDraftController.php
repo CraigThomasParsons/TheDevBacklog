@@ -49,9 +49,13 @@ class EpicDraftController extends Controller
             return back()->with('error', 'Epic has no stories to move into a sprint.');
         }
 
-        $draftStatus = SprintStatus::byKey('draft') ?? SprintStatus::query()->first();
+        // Promote moved epic drafts into the live planning lane by default.
+        $targetStatus = SprintStatus::byKey('active')
+            ?? SprintStatus::byKey('ready')
+            ?? SprintStatus::byKey('draft')
+            ?? SprintStatus::query()->first();
 
-        if (! $draftStatus) {
+        if (! $targetStatus) {
             return back()->with('error', 'No sprint statuses available. Seed statuses first.');
         }
 
@@ -68,7 +72,7 @@ class EpicDraftController extends Controller
             'title' => $title,
             'goal' => $epic->summary ?: "Deliver the draft scope for epic: {$epic->title}",
             'success_criteria' => "All stories selected from this epic draft are planned and execution-ready.",
-            'sprint_status_id' => $draftStatus->id,
+            'sprint_status_id' => $targetStatus->id,
         ]);
 
         $syncData = [];

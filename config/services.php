@@ -48,4 +48,8 @@ return [
         'sync_lag_warning_minutes' => env('PROJECTS_SYNC_LAG_WARNING_MINUTES', 20),
     ],
 
+    'writersroom_sync' => [
+        'token' => env('DEVBACKLOG_SYNC_TOKEN'),
+    ],
+
 ];

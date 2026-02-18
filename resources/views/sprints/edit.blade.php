@@ -7,7 +7,7 @@
 @endsection
 
 @section('content')
-    <form method="POST" action="{{ route('sprints.update', $sprint) }}" x-data="sprintBuilder()">
+    <form id="sprint-edit-form" method="POST" action="{{ route('sprints.update', $sprint) }}" x-data="sprintBuilder()">
         @csrf
         @method('PUT')
 
@@ -131,14 +131,12 @@
 
         <!-- Actions -->
         <div class="mt-6 flex justify-between">
-            <form method="POST" action="{{ route('sprints.destroy', $sprint) }}" 
-                  onsubmit="return confirm('Are you sure you want to delete this sprint?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="text-red-600 hover:text-red-800 text-sm">
-                    Delete Sprint
-                </button>
-            </form>
+            <button type="submit"
+                    form="sprint-delete-form"
+                    class="text-red-600 hover:text-red-800 text-sm"
+                    onclick="return confirm('Are you sure you want to delete this sprint?');">
+                Delete Sprint
+            </button>
 
             <div class="flex gap-3">
                 <a href="{{ route('sprints.show', $sprint) }}" 
@@ -193,4 +191,9 @@
             }
         }
     </script>
+
+    <form id="sprint-delete-form" method="POST" action="{{ route('sprints.destroy', $sprint) }}" class="hidden">
+        @csrf
+        @method('DELETE')
+    </form>
 @endsection
