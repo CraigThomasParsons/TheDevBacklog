@@ -13,3 +13,10 @@ Schedule::command('ccdf:sync-projects')
     ->everyFifteenMinutes()
     ->withoutOverlapping()
     ->runInBackground();
+
+// Sync ready stories from WritersRoom into DevBacklog so Mason can pick them up.
+// Must run inside Docker because the writersroom DB connection uses host.docker.internal.
+Schedule::command('ccdf:sync-stories')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->runInBackground();

@@ -56,6 +56,16 @@ class Story extends Model
         return $this->hasMany(StoryTask::class)->orderBy('sort_order');
     }
 
+    public function comments(): HasMany
+    {
+        return $this->hasMany(StoryComment::class)->latest();
+    }
+
+    public function codeFolders(): HasMany
+    {
+        return $this->hasMany(StoryCodeFolder::class);
+    }
+
     public function scopeReady(Builder $query): Builder
     {
         return $query->whereHas('status', fn ($q) => $q->where('key', 'ready'));

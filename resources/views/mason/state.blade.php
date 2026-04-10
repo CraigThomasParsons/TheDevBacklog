@@ -9,6 +9,19 @@
             <p class="text-sm text-gray-600 dark:text-gray-400">Live execution snapshot for current sprint work.</p>
         </div>
         <div class="flex items-center gap-2">
+            <form method="POST" action="{{ route('mason.state.provider') }}" class="flex items-center gap-2">
+                @csrf
+                <select name="provider_override"
+                        title="Select which provider Mason should use."
+                        class="bg-gray-800 border border-gray-600 text-white px-3 py-2 rounded-lg text-sm">
+                    @foreach ($providerOptions as $providerKey => $providerLabel)
+                        <option value="{{ $providerKey }}" @selected(data_get($state, 'run_control.provider_override', 'auto') === $providerKey)>{{ $providerLabel }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm font-semibold">
+                    Set Provider
+                </button>
+            </form>
             <form method="POST" action="{{ route('mason.state.start') }}">
                 @csrf
                 <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold">
@@ -74,6 +87,7 @@
                             <div class="text-xs text-gray-400 uppercase">Current Sprint</div>
                             <div class="text-lg text-white font-semibold">${escapeHtml(state.sprint.title)}</div>
                             <div class="text-sm text-gray-400">Status: ${escapeHtml(state.sprint.status)}</div>
+                            <div class="text-sm text-gray-400 mt-1">Provider: ${escapeHtml((state.run_control?.provider_options || {})[state.run_control?.provider_override] ?? (state.run_control?.provider_override ?? 'auto'))}</div>
                         </div>
                         <div class="bg-gray-800 rounded-lg p-4">
                             <div class="text-xs text-gray-400 uppercase">WIP</div>

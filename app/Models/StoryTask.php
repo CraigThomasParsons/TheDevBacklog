@@ -11,6 +11,7 @@ class StoryTask extends Model
     use HasFactory;
 
     protected $fillable = [
+        'feature_id',
         'story_id',
         'external_task_id',
         'title',
@@ -24,10 +25,12 @@ class StoryTask extends Model
         'sort_order',
         'max_attempts',
         'state',
+        'assignee_agent',
         'last_provider',
         'last_run_status',
         'last_duration_ms',
         'last_synced_at',
+        'error_message',
         'raw_payload',
     ];
 
@@ -47,5 +50,10 @@ class StoryTask extends Model
     public function story(): BelongsTo
     {
         return $this->belongsTo(Story::class);
+    }
+
+    public function feature(): BelongsTo
+    {
+        return $this->belongsTo(Feature::class);
     }
 }

@@ -18,6 +18,7 @@ class MasonRunState
     public function snapshot(): array
     {
         $runControl = MasonRunControl::singleton();
+        $providerOptions = config('mason.provider_options', []);
         $heartbeatFresh = $runControl->last_heartbeat_at
             ? $runControl->last_heartbeat_at->gt(now()->subSeconds(300))
             : false;
@@ -49,6 +50,8 @@ class MasonRunState
                     'last_status_message' => $runControl->last_status_message,
                     'heartbeat_fresh' => $heartbeatFresh,
                     'current_story_id' => $runControl->current_story_id,
+                    'provider_override' => $runControl->provider_override ?: 'auto',
+                    'provider_options' => $providerOptions,
                 ],
             ];
         }
@@ -102,6 +105,8 @@ class MasonRunState
                 'last_status_message' => $runControl->last_status_message,
                 'heartbeat_fresh' => $heartbeatFresh,
                 'current_story_id' => $runControl->current_story_id,
+                'provider_override' => $runControl->provider_override ?: 'auto',
+                'provider_options' => $providerOptions,
             ],
         ];
     }

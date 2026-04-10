@@ -52,4 +52,8 @@ return [
         'token' => env('DEVBACKLOG_SYNC_TOKEN'),
     ],
 
+    'chatprojects' => [
+        'webhook_token' => env('CHATPROJECTS_WEBHOOK_TOKEN'),
+    ],
+
 ];

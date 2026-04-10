@@ -1,8 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\MasonChatController;
 use App\Http\Controllers\Api\StoryController;
 use App\Http\Controllers\Api\MasonRunStateController;
+use App\Http\Controllers\Api\InceptionWebhookController;
 use App\Http\Controllers\Api\ProjectProjectionSyncController;
 
 /**
@@ -48,6 +50,11 @@ Route::prefix('stories')->group(function () {
     // GET /api/stories/{id}/tasks
     Route::get('/{story}/tasks', [StoryController::class, 'tasks']);
 
+    // List/add comments for story handoff and status narration
+    // GET|POST /api/stories/{id}/comments
+    Route::get('/{story}/comments', [StoryController::class, 'comments']);
+    Route::post('/{story}/comments', [StoryController::class, 'storeComment']);
+
     // Update a single persisted task state by external task id
     // POST /api/stories/{id}/tasks/{externalTaskId}/state
     Route::post('/{story}/tasks/{externalTaskId}/state', [StoryController::class, 'updateTaskState']);
@@ -62,9 +69,16 @@ Route::get('/mason/run-state', [MasonRunStateController::class, 'show']);
 Route::post('/mason/run-state/start', [MasonRunStateController::class, 'start']);
 Route::post('/mason/run-state/stop', [MasonRunStateController::class, 'stop']);
 Route::post('/mason/run-state/heartbeat', [MasonRunStateController::class, 'heartbeat']);
+Route::post('/mason/run-state/provider', [MasonRunStateController::class, 'updateProvider']);
+Route::get('/mason/chat/messages', [MasonChatController::class, 'index']);
+Route::get('/mason/chat/inbox', [MasonChatController::class, 'inbox']);
+Route::post('/mason/chat/messages', [MasonChatController::class, 'store']);
 
 // Canonical Projects registry webhook for upsert/delete projection events.
 Route::post('/projects/projection-sync', [ProjectProjectionSyncController::class, 'store']);
+
+// ChatProjects pipeline webhooks.
+Route::post('/inception/completed', [InceptionWebhookController::class, 'completed']);
 
 /**
  * Health check endpoint

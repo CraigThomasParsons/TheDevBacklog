@@ -40,6 +40,7 @@ class SprintController extends Controller
         // Return early with empty columns when no sprint is available yet.
         if ($currentSprint === null) {
             $masonRunControl = MasonRunControl::singleton();
+            $providerOptions = config('mason.provider_options', []);
             $masonHeartbeatFresh = $masonRunControl->last_heartbeat_at
                 ? $masonRunControl->last_heartbeat_at->gt(now()->subSeconds(300))
                 : false;
@@ -52,6 +53,7 @@ class SprintController extends Controller
                 'doneStories' => collect(),
                 'masonRunControl' => $masonRunControl,
                 'masonHeartbeatFresh' => $masonHeartbeatFresh,
+                'providerOptions' => $providerOptions,
             ]);
         }
 
@@ -84,6 +86,7 @@ class SprintController extends Controller
         }
 
         $masonRunControl = MasonRunControl::singleton();
+        $providerOptions = config('mason.provider_options', []);
         $masonHeartbeatFresh = $masonRunControl->last_heartbeat_at
             ? $masonRunControl->last_heartbeat_at->gt(now()->subSeconds(300))
             : false;
@@ -95,7 +98,8 @@ class SprintController extends Controller
             'inReviewStories',
             'doneStories',
             'masonRunControl',
-            'masonHeartbeatFresh'
+            'masonHeartbeatFresh',
+            'providerOptions'
         ));
     }
 
@@ -239,6 +243,79 @@ class SprintController extends Controller
             ->with('success', 'Sprint frozen. Context is now immutable.');
     }
 
+    public function complete(Sprint $sprint)
+    {
+        $sprint->load(['status', 'stories.status']);
+
+        if (in_array($sprint->status?->key, ['closed', 'archived'], true)) {
+            return redirect()->route('sprints.show', $sprint)
+                ->with('success', 'Sprint is already completed.');
+        }
+
+        $closedStatus = SprintStatus::byKey('closed') ?? SprintStatus::byKey('archived');
+        if (! $closedStatus) {
+            return redirect()->route('sprints.show', $sprint)
+                ->with('error', 'No closed/archived sprint status found.');
+        }
+
+        $readyStoryStatus = StoryStatus::byKey('ready') ?? StoryStatus::byKey('draft');
+        $doneKeys = ['done', 'completed', 'passed'];
+
+        $movedStoryCount = 0;
+        $nextSprintTitle = null;
+
+        DB::transaction(function () use ($sprint, $closedStatus, $readyStoryStatus, $doneKeys, &$movedStoryCount, &$nextSprintTitle): void {
+            $incompleteStories = $sprint->stories->filter(
+                fn ($story) => ! in_array($story->status?->key, $doneKeys, true)
+            )->values();
+
+            if ($incompleteStories->isNotEmpty()) {
+                $nextSprint = Sprint::query()
+                    ->with('status')
+                    ->where('id', '!=', $sprint->id)
+                    ->whereHas('status', fn ($query) => $query->whereIn('key', ['draft', 'ready']))
+                    ->orderBy('created_at')
+                    ->first();
+
+                if ($nextSprint === null) {
+                    $nextSprint = $this->createCarryoverSprint($sprint);
+                }
+
+                $nextSprintTitle = $nextSprint->title;
+                $maxSortOrder = DB::table('sprint_stories')->where('sprint_id', $nextSprint->id)->max('sort_order');
+                $nextSortOrder = $maxSortOrder !== null ? ((int) $maxSortOrder + 1) : 0;
+
+                foreach ($incompleteStories as $story) {
+                    $nextSprint->stories()->syncWithoutDetaching([
+                        $story->id => ['sort_order' => $nextSortOrder],
+                    ]);
+                    $nextSortOrder++;
+
+                    if ($readyStoryStatus && ! in_array($story->status?->key, $doneKeys, true)) {
+                        $story->story_status_id = $readyStoryStatus->id;
+                        $story->save();
+                    }
+
+                    $sprint->stories()->detach($story->id);
+                    $movedStoryCount++;
+                }
+            }
+
+            $sprint->sprint_status_id = $closedStatus->id;
+            $sprint->save();
+        });
+
+        $message = "Sprint completed. Moved {$movedStoryCount} unfinished stor" . ($movedStoryCount === 1 ? 'y' : 'ies');
+        if ($movedStoryCount > 0 && $nextSprintTitle) {
+            $message .= " to '{$nextSprintTitle}'.";
+        } else {
+            $message .= '.';
+        }
+
+        return redirect()->route('sprints.show', $sprint)
+            ->with('success', $message);
+    }
+
     public function exportSpec(Sprint $sprint)
     {
         $markdown = $sprint->toSpecMarkdown();
@@ -254,13 +331,6 @@ class SprintController extends Controller
      */
     public function updateBoard(Request $request, Sprint $sprint): JsonResponse
     {
-        if ($sprint->is_frozen) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Sprint is frozen and cannot be modified.',
-            ], 409);
-        }
-
         $validated = $request->validate([
             'columns' => ['required', 'array'],
             'columns.todo' => ['required', 'array'],
@@ -354,5 +424,26 @@ class SprintController extends Controller
         }
 
         return null;
+    }
+
+    private function createCarryoverSprint(Sprint $sourceSprint): Sprint
+    {
+        $draftStatus = SprintStatus::byKey('draft') ?? SprintStatus::query()->first();
+        $titleBase = trim($sourceSprint->title . ' - Carryover');
+        $title = $titleBase;
+        $suffix = 2;
+
+        while (Sprint::query()->where('title', $title)->exists()) {
+            $title = "{$titleBase} {$suffix}";
+            $suffix++;
+        }
+
+        return Sprint::create([
+            'title' => $title,
+            'goal' => "Carry over unfinished work from '{$sourceSprint->title}'.",
+            'success_criteria' => 'Complete all unfinished stories carried from previous sprint.',
+            'sprint_status_id' => $draftStatus?->id,
+            'is_frozen' => false,
+        ]);
     }
 }

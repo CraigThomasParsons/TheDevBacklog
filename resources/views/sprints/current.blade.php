@@ -21,6 +21,22 @@
 
         @if ($currentSprint)
             <div class="flex items-center gap-2">
+                <form method="POST" action="{{ route('mason.state.provider') }}" class="flex items-center gap-2">
+                    @csrf
+                    <select name="provider_override"
+                            title="Select which framework provider Mason should use for task execution."
+                            class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
+                        @foreach ($providerOptions as $providerKey => $providerLabel)
+                            <option value="{{ $providerKey }}" @selected(($masonRunControl->provider_override ?? 'auto') === $providerKey)>
+                                {{ $providerLabel }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <button type="submit"
+                            class="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        Set Provider
+                    </button>
+                </form>
                 <form method="POST" action="{{ route('mason.state.start') }}">
                     @csrf
                     <button type="submit"
@@ -69,6 +85,9 @@
                     <span class="font-semibold">Sprint Status:</span>
                     {{ $masonRunControl->is_running ? 'Running' : 'Stopped / Waiting' }}
                     <span class="mx-2">•</span>
+                    <span class="font-semibold">Provider:</span>
+                    {{ $providerOptions[$masonRunControl->provider_override ?? 'auto'] ?? ($masonRunControl->provider_override ?? 'Auto') }}
+                    <span class="mx-2">•</span>
                     <span class="font-semibold">Heartbeat:</span>
                     {{ $masonHeartbeatFresh ? 'Fresh' : 'Stale' }}
                     @if ($masonRunControl->last_heartbeat_at)
@@ -99,7 +118,7 @@
         </div>
         @if ($currentSprint->is_frozen)
             <div class="mb-4 rounded-md border border-blue-300 bg-blue-50 px-4 py-2 text-sm text-blue-800">
-                Sprint is frozen. Drag-and-drop is disabled.
+                Sprint is frozen: story membership is locked, but board movement/status updates are still allowed.
             </div>
         @endif
 
@@ -168,7 +187,6 @@
                 const errorMessage = document.getElementById('board-error-message');
                 const saveUrl = @json(route('sprints.board.update', $currentSprint));
                 const csrfToken = @json(csrf_token());
-                const isFrozen = @json((bool) $currentSprint->is_frozen);
                 let hideMessageTimeoutId = null;
                 let hideErrorTimeoutId = null;
 
@@ -234,10 +252,6 @@
                 };
 
                 const persistBoard = async () => {
-                    if (isFrozen) {
-                        return;
-                    }
-
                     const payload = collectBoardPayload();
 
                     const response = await fetch(saveUrl, {
@@ -270,7 +284,7 @@
                     new Sortable(columnElement, {
                         group: 'current-sprint-board',
                         animation: 150,
-                        disabled: isFrozen,
+                        disabled: false,
                         ghostClass: 'sortable-ghost',
                         onEnd: async () => {
                             try {

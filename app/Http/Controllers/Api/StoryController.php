@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Sprint;
 use App\Models\Story;
+use App\Models\StoryComment;
 use App\Models\StoryTask;
 use App\Models\StoryStatus;
 use Illuminate\Http\JsonResponse;
@@ -432,11 +433,71 @@ class StoryController extends Controller
                 'last_provider' => $task->last_provider,
                 'last_run_status' => $task->last_run_status,
                 'last_duration_ms' => $task->last_duration_ms,
+                'error_message' => $task->error_message,
                 'last_synced_at' => $task->last_synced_at?->toIso8601String(),
                 'created_at' => $task->created_at?->toIso8601String(),
                 'updated_at' => $task->updated_at?->toIso8601String(),
             ])->values(),
         ]);
+    }
+
+    /**
+     * List comments attached to a story.
+     *
+     * GET /api/stories/{id}/comments
+     */
+    public function comments(Story $story): JsonResponse
+    {
+        $story->load('comments');
+
+        return response()->json([
+            'success' => true,
+            'story_id' => $story->id,
+            'count' => $story->comments->count(),
+            'comments' => $story->comments->map(fn (StoryComment $comment) => [
+                'id' => $comment->id,
+                'author_name' => $comment->author_name,
+                'source' => $comment->source,
+                'kind' => $comment->kind,
+                'body' => $comment->body,
+                'created_at' => $comment->created_at?->toIso8601String(),
+            ])->values(),
+        ]);
+    }
+
+    /**
+     * Add comment to a story. Used by humans and Mason handoff/status notes.
+     *
+     * POST /api/stories/{id}/comments
+     */
+    public function storeComment(Request $request, Story $story): JsonResponse
+    {
+        $validated = $request->validate([
+            'author_name' => 'nullable|string|max:120',
+            'source' => 'nullable|string|max:40',
+            'kind' => 'nullable|string|max:40',
+            'body' => 'required|string|max:5000',
+        ]);
+
+        $comment = StoryComment::query()->create([
+            'story_id' => $story->id,
+            'author_name' => trim($validated['author_name'] ?? '') ?: 'Anonymous',
+            'source' => $validated['source'] ?? 'mason',
+            'kind' => $validated['kind'] ?? 'status',
+            'body' => $validated['body'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'comment' => [
+                'id' => $comment->id,
+                'author_name' => $comment->author_name,
+                'source' => $comment->source,
+                'kind' => $comment->kind,
+                'body' => $comment->body,
+                'created_at' => $comment->created_at?->toIso8601String(),
+            ],
+        ], 201);
     }
 
     /**
@@ -451,6 +512,7 @@ class StoryController extends Controller
             'last_provider' => 'nullable|string|max:100',
             'last_run_status' => 'nullable|string|max:100',
             'last_duration_ms' => 'nullable|integer|min:0',
+            'error_message' => 'nullable|string',
         ]);
 
         $task = StoryTask::query()
@@ -469,6 +531,9 @@ class StoryController extends Controller
         $task->last_provider = $validated['last_provider'] ?? $task->last_provider;
         $task->last_run_status = $validated['last_run_status'] ?? $task->last_run_status;
         $task->last_duration_ms = $validated['last_duration_ms'] ?? $task->last_duration_ms;
+        if (array_key_exists('error_message', $validated)) {
+            $task->error_message = $validated['error_message'];
+        }
         $task->save();
 
         return response()->json([
@@ -480,6 +545,7 @@ class StoryController extends Controller
                 'last_provider' => $task->last_provider,
                 'last_run_status' => $task->last_run_status,
                 'last_duration_ms' => $task->last_duration_ms,
+                'error_message' => $task->error_message, // [NEW]
                 'updated_at' => $task->updated_at?->toIso8601String(),
             ],
         ]);

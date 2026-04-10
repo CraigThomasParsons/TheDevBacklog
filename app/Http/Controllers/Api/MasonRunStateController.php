@@ -78,4 +78,26 @@ class MasonRunStateController extends Controller
             'success' => true,
         ]);
     }
+
+    public function updateProvider(Request $request, MasonRunState $masonRunState): JsonResponse
+    {
+        $providerOptions = config('mason.provider_options', []);
+        $keys = array_keys($providerOptions);
+
+        $validated = $request->validate([
+            'provider_override' => 'required|string|in:' . implode(',', $keys),
+        ]);
+
+        $runControl = MasonRunControl::singleton();
+        $provider = $validated['provider_override'];
+        $runControl->provider_override = $provider === 'auto' ? null : $provider;
+        $runControl->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Provider mode updated',
+            'state' => $masonRunState->snapshot(),
+        ]);
+    }
+
 }

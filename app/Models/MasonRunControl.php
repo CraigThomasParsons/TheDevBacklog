@@ -14,6 +14,7 @@ class MasonRunControl extends Model
         'current_story_id',
         'last_status_message',
         'heartbeat_payload',
+        'provider_override',
     ];
 
     protected $casts = [

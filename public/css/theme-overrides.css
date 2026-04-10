@@ -1,0 +1,192 @@
+/**
+ * Theme Overrides — maps CSS custom properties from ThemeEngine
+ * onto the Tailwind-utility-driven layout elements.
+ *
+ * This file uses !important sparingly to override Tailwind's inline
+ * utility classes without touching every Blade template.
+ */
+
+/* ── Global ── */
+:root {
+    /* Fallbacks if ThemeEngine hasn't loaded yet */
+    --theme-primary:       #16a34a;
+    --theme-primary-hover:  #15803d;
+    --theme-bg:            #f3f4f6;
+    --theme-surface:       #ffffff;
+    --theme-text:          #111827;
+    --theme-text-muted:    #6b7280;
+    --theme-nav-bg:        #ffffff;
+    --theme-nav-border:    #e5e7eb;
+    --theme-card-bg:       #ffffff;
+    --theme-card-border:   #e5e7eb;
+    --theme-accent:        #16a34a;
+    --theme-accent-text:   #ffffff;
+    --theme-btn-bg:        #16a34a;
+    --theme-btn-bg-hover:  #15803d;
+    --theme-input-bg:      #ffffff;
+    --theme-input-border:  #d1d5db;
+    --theme-topbar-bg:     #111827;
+    --theme-topbar-text:   #d1d5db;
+    --theme-radius:        0.5rem;
+    --theme-font:          'Figtree', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Typography ── */
+body {
+    font-family: var(--theme-font) !important;
+    background-color: var(--theme-bg) !important;
+    color: var(--theme-text) !important;
+}
+
+/* ── Top Utility Bar ── */
+.tdb-topbar {
+    background: var(--theme-topbar-bg);
+    color: var(--theme-topbar-text);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tdb-topbar a,
+.tdb-topbar button {
+    color: var(--theme-topbar-text);
+    transition: opacity 0.15s ease;
+}
+
+.tdb-topbar a:hover,
+.tdb-topbar button:hover {
+    opacity: 0.8;
+}
+
+/* ── Main Navigation ── */
+nav.tdb-nav {
+    background-color: var(--theme-nav-bg) !important;
+    border-color: var(--theme-nav-border) !important;
+}
+
+nav.tdb-nav .tdb-brand {
+    color: var(--theme-primary) !important;
+}
+
+nav.tdb-nav .tdb-nav-link {
+    color: var(--theme-text-muted) !important;
+    border-color: transparent !important;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+nav.tdb-nav .tdb-nav-link:hover {
+    color: var(--theme-text) !important;
+    border-color: var(--theme-nav-border) !important;
+}
+
+nav.tdb-nav .tdb-nav-link.active {
+    color: var(--theme-text) !important;
+    border-color: var(--theme-primary) !important;
+}
+
+/* ── Page Header ── */
+.tdb-page-header {
+    background-color: var(--theme-surface) !important;
+}
+
+.tdb-page-header h1,
+.tdb-page-header h2 {
+    color: var(--theme-text) !important;
+}
+
+/* ── Cards ── */
+.tdb-card {
+    background-color: var(--theme-card-bg) !important;
+    border-color: var(--theme-card-border) !important;
+    border-radius: var(--theme-radius) !important;
+}
+
+.tdb-card-title {
+    color: var(--theme-text) !important;
+}
+
+.tdb-card-title:hover {
+    color: var(--theme-primary) !important;
+}
+
+.tdb-card-body {
+    color: var(--theme-text-muted) !important;
+}
+
+/* ── Buttons ── */
+.tdb-btn-primary {
+    background-color: var(--theme-btn-bg) !important;
+    border-color: var(--theme-btn-bg) !important;
+    color: var(--theme-accent-text) !important;
+    border-radius: var(--theme-radius) !important;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.tdb-btn-primary:hover {
+    background-color: var(--theme-btn-bg-hover) !important;
+    border-color: var(--theme-btn-bg-hover) !important;
+    transform: translateY(-1px);
+}
+
+/* ── Links ── */
+.tdb-link {
+    color: var(--theme-primary) !important;
+    transition: opacity 0.15s ease;
+}
+
+.tdb-link:hover {
+    opacity: 0.8;
+}
+
+/* ── Form Inputs ── */
+.tdb-input {
+    background-color: var(--theme-input-bg) !important;
+    border-color: var(--theme-input-border) !important;
+    color: var(--theme-text) !important;
+    border-radius: var(--theme-radius) !important;
+}
+
+.tdb-input:focus {
+    border-color: var(--theme-primary) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 25%, transparent) !important;
+}
+
+/* ── Flash Messages ── */
+.tdb-flash-success {
+    background-color: color-mix(in srgb, var(--theme-primary) 15%, var(--theme-surface));
+    border: 1px solid color-mix(in srgb, var(--theme-primary) 40%, transparent);
+    color: var(--theme-primary);
+    border-radius: var(--theme-radius);
+}
+
+/* ── Muted Text ── */
+.tdb-muted {
+    color: var(--theme-text-muted) !important;
+}
+
+/* ── Surface Background ── */
+.tdb-surface {
+    background-color: var(--theme-surface) !important;
+}
+
+/* ── Dividers ── */
+.tdb-divider {
+    border-color: var(--theme-card-border) !important;
+}
+
+/* ── Shadows with theme awareness ── */
+.tdb-shadow {
+    box-shadow: 0 1px 3px 0 color-mix(in srgb, var(--theme-text) 10%, transparent),
+                0 1px 2px -1px color-mix(in srgb, var(--theme-text) 10%, transparent);
+}
+
+/* ── Smooth transitions for theme changes ── */
+body,
+nav.tdb-nav,
+.tdb-topbar,
+.tdb-card,
+.tdb-page-header,
+.tdb-btn-primary,
+.tdb-input {
+    transition: background-color 0.3s ease,
+                color 0.3s ease,
+                border-color 0.3s ease;
+}
