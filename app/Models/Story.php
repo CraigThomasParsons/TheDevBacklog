@@ -56,6 +56,11 @@ class Story extends Model
         return $this->hasMany(StoryTask::class)->orderBy('sort_order');
     }
 
+    public function backlogTasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
     public function comments(): HasMany
     {
         return $this->hasMany(StoryComment::class)->latest();
