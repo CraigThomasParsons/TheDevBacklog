@@ -1,211 +1,328 @@
 # TheDevBacklog
+**The Backlog (Agent-Native, Agile-Compatible)** : Attempting to make an A.I. agent framework to run through Tasks and execute them from a backlog.
 
-The Backlog (Agent-Native, Agile-Compatible): An A.I. agent framework to run through Tasks and execute them from a backlog.
+The Backlog contains A Laravel code generator that automatically creates migrations, Eloquent models with relationships, REST controllers, seeders, and API routes.
 
-## About
+---
 
-This Laravel 11 application provides a structured backlog system designed for agent-native task management. It implements a hierarchical structure: **Epics → Stories → Tasks → Runs**, enabling organized task tracking and execution planning.
+# The Developer Backlog is a context-controlled development factory, but the middle part of it.
+An attempt to build an AI-driven backlog system where agents pull structured work like developers in a sprint.
+
+---
+
+## Overview
+
+TheDevBacklog is a Laravel-based system designed to model a modern agile backlog while enabling AI agents to operate within it safely and deterministically.
+
+Instead of giving agents full autonomy, this project introduces a structured hierarchy:
+
+```
+Epics
+  ↓
+Stories
+  ↓
+Tasks   ← Mason emits these
+  ↓
+Runs    ← Goose executes these
+```
+
+The goal is to treat AI agents like disciplined developers:
+
+* They pull one task at a time
+* They execute within constraints
+* They produce observable evidence
+* Retries are explicit and bounded
+
+No hidden loops. No magic autonomy.
+
+---
+
+## Philosophy
+
+This project separates concerns intentionally:
+
+* **Backlog = Intent**
+* **Queue = Commitment**
+* **Run = Evidence**
+* **Evaluation = Truth (future: Vera)**
+
+Agents do not decide success.
+Agents do not redefine scope.
+Agents execute one task at a time.
+
+The filesystem and database are the source of truth.
+
+---
+
+## Goals
+
+### 1. Build an Agent-Native Backlog
+
+Create a backlog system where both humans and AI agents can interact with Epics, Stories, and Tasks.
+
+### 2. Enforce Agile Discipline
+
+Model a sprint workflow where:
+
+* Mason fills the backlog
+* Ready Tasks enter a `task_queue`
+* Goose pulls exactly one task like a developer
+
+### 3. Separate Planning, Execution, and Judgment
+
+* Mason → planning & task decomposition
+* Goose → execution (one task per run)
+* Vera (future seperate repo) → verification & confidence scoring
+
+### 4. Explicit and Bounded Retries
+
+Retries are:
+
+* Limited
+* Auditable
+* Confidence-aware
+* Never automatic or silent
+
+### 5. Laravel Queues as an Agent Sprint System
+
+Use Laravel queues not just as background jobs,
+but as a structured “agent sprint engine.”
+
+---
+
+## Current Scope
+
+This repository currently includes:
+
+* Epics
+* Stories
+* Tasks
+* Runs
+* Basic relationships and API structure
+
+No execution engine yet.
+No evaluation layer yet.
+No autonomous retries yet.
+
+This repo defines **structure first**.
+
+---
+
+## Future Direction
+
+Planned additions:
+
+* `task_queue` claim protocol
+* Atomic task claiming (like a developer pulling work)
+* Run history tracking
+* Confidence decay logic
+* Vera integration (in a separate repository)
+* Agent sprint dashboards
+
+---
+
+## Why This Exists
+
+Most AI agent frameworks collapse planning, execution, and judgment into a single loop.
+
+This project deliberately splits them apart.
+
+It is an experiment in building:
+
+> Agile for machines.
 
 ## Features
 
-- **Hierarchical Backlog Structure**
-  - Epics: High-level initiatives
-  - Stories: User stories or features within epics
-  - Tasks: Specific work items within stories
-  - Runs: Execution attempts of tasks
-
-- **Status Tracking**: All entities include status fields for progress monitoring
-- **Relationships**: Fully defined Eloquent relationships for easy data navigation
-- **RESTful API**: Simple API endpoint to retrieve the complete backlog hierarchy
-- **Seeded Data**: Sample data for immediate testing and development
-
-## Database Structure
-
-### Epics
-- `id`: Primary key
-- `title`: Epic name
-- `description`: Detailed description
-- `status`: Current state (e.g., pending, in_progress, completed)
-- `timestamps`: Created/updated timestamps
-
-### Stories
-- `id`: Primary key
-- `epic_id`: Foreign key to Epics
-- `title`: Story name
-- `description`: Detailed description
-- `status`: Current state
-- `timestamps`: Created/updated timestamps
-
-### Tasks
-- `id`: Primary key
-- `story_id`: Foreign key to Stories
-- `title`: Task name
-- `description`: Detailed description
-- `status`: Current state
-- `timestamps`: Created/updated timestamps
-
-### Runs
-- `id`: Primary key
-- `task_id`: Foreign key to Tasks
-- `status`: Execution state (e.g., pending, in_progress, completed, failed)
-- `started_at`: Run start timestamp
-- `completed_at`: Run completion timestamp
-- `timestamps`: Created/updated timestamps
+- **Migration Generator**: Create Laravel migrations with fields, indexes, foreign keys, timestamps, and soft deletes
+- **Model Generator**: Generate Eloquent models with fillable fields, relationships (hasMany, hasOne, belongsTo, belongsToMany), and soft deletes
+- **Controller Generator**: Build REST API controllers with CRUD operations (index, store, show, update, destroy) and validation
+- **Seeder Generator**: Create database seeders with custom data or factory support
+- **Route Generator**: Generate API route definitions for resources
 
 ## Installation
 
-1. Clone the repository:
-```bash
-git clone https://github.com/CraigThomasParsons/TheDevBacklog.git
-cd TheDevBacklog
-```
-
-2. Install dependencies:
 ```bash
 composer install
 ```
 
-3. Copy environment file:
-```bash
-cp .env.example .env
-```
-
-4. Generate application key:
-```bash
-php artisan key:generate
-```
-
-5. Run migrations and seeders:
-```bash
-php artisan migrate:fresh --seed
-```
+For detailed usage instructions, see [USAGE.md](USAGE.md).
 
 ## Usage
 
-### Starting the Application
+### Using the CLI Tool (Recommended)
 
+The easiest way to use the generator is with the CLI tool and a configuration file:
+
+1. Copy the example config file:
 ```bash
-php artisan serve
+cp config.example.php config.php
 ```
 
-The application will be available at `http://localhost:8000`
+2. Edit `config.php` to define your resources
 
-### API Endpoints
-
-#### Get Complete Backlog Hierarchy
-
-**Endpoint:** `GET /api/backlog`
-
-**Response:** JSON containing all epics with nested stories, tasks, and runs
-
+3. Run the generator:
 ```bash
-curl http://localhost:8000/api/backlog
+php generate.php config.php
 ```
 
-**Response Structure:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "title": "Epic Title",
-      "description": "Epic description",
-      "status": "in_progress",
-      "stories": [
-        {
-          "id": 1,
-          "title": "Story Title",
-          "description": "Story description",
-          "status": "completed",
-          "tasks": [
-            {
-              "id": 1,
-              "title": "Task Title",
-              "description": "Task description",
-              "status": "completed",
-              "runs": [
-                {
-                  "id": 1,
-                  "status": "completed",
-                  "started_at": "2026-02-06T18:52:41.000000Z",
-                  "completed_at": "2026-02-07T18:52:41.000000Z"
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-```
+### Basic Example
 
-## Models and Relationships
-
-### Epic Model
 ```php
-// Relationships
-$epic->stories // HasMany relationship to stories
+<?php
+
+require_once 'vendor/autoload.php';
+
+use TheDevBacklog\CodeGenerator;
+
+$resource = [
+    'model' => 'Product',
+    'table' => 'products',
+    'fields' => [
+        ['name' => 'name', 'type' => 'string'],
+        ['name' => 'price', 'type' => 'decimal:8,2'],
+        ['name' => 'stock', 'type' => 'integer', 'default' => 0],
+    ],
+    'fillable' => ['name', 'price', 'stock'],
+    'validationRules' => [
+        'name' => 'required|string|max:255',
+        'price' => 'required|numeric|min:0',
+        'stock' => 'integer|min:0',
+    ],
+    'routeResource' => 'products',
+];
+
+$generator = new CodeGenerator('./output');
+$result = $generator->generateMultipleResources([$resource]);
+$writtenFiles = $generator->writeFiles($result);
 ```
 
-### Story Model
+### Advanced Example with Relationships
+
 ```php
-// Relationships
-$story->epic   // BelongsTo relationship to epic
-$story->tasks  // HasMany relationship to tasks
+$postResource = [
+    'model' => 'Post',
+    'table' => 'posts',
+    'fields' => [
+        ['name' => 'title', 'type' => 'string'],
+        ['name' => 'content', 'type' => 'text'],
+        ['name' => 'user_id', 'type' => 'foreignId', 'index' => true],
+    ],
+    'fillable' => ['title', 'content', 'user_id'],
+    'relationships' => [
+        [
+            'type' => 'belongsTo',
+            'name' => 'user',
+            'model' => 'User',
+            'foreignKey' => 'user_id',
+        ],
+        [
+            'type' => 'hasMany',
+            'name' => 'comments',
+            'model' => 'Comment',
+        ],
+    ],
+    'timestamps' => true,
+    'softDeletes' => true,
+    'validationRules' => [
+        'title' => 'required|string|max:255',
+        'content' => 'required|string',
+        'user_id' => 'required|exists:users,id',
+    ],
+    'seederData' => [
+        ['title' => 'First Post', 'content' => 'Content here', 'user_id' => 1],
+    ],
+];
+
+$generator = new CodeGenerator('./output');
+$result = $generator->generateMultipleResources([$postResource]);
+$writtenFiles = $generator->writeFiles($result);
 ```
 
-### Task Model
-```php
-// Relationships
-$task->story // BelongsTo relationship to story
-$task->runs  // HasMany relationship to runs
-```
+## Configuration Options
 
-### Run Model
-```php
-// Relationships
-$run->task // BelongsTo relationship to task
-```
+### Resource Configuration
 
-## Development
+| Option | Type | Description |
+|--------|------|-------------|
+| `model` | string | Model name (e.g., 'Post') |
+| `table` | string | Database table name (e.g., 'posts') |
+| `fields` | array | Array of field definitions |
+| `fillable` | array | Fillable fields for mass assignment |
+| `relationships` | array | Model relationships |
+| `timestamps` | boolean | Include timestamps (default: true) |
+| `softDeletes` | boolean | Include soft deletes (default: false) |
+| `controller` | string | Controller name (default: ModelController) |
+| `validationRules` | array | Validation rules for controller |
+| `seeder` | string | Seeder name (default: ModelSeeder) |
+| `seederData` | array | Seed data |
+| `useFactory` | boolean | Use factory for seeding (default: false) |
+| `factoryCount` | integer | Number of factory records (default: 10) |
+| `routeResource` | string | API route resource name |
 
-### Running Tests
+### Field Definition
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `name` | string | Field name |
+| `type` | string | Laravel column type (string, text, integer, etc.) |
+| `nullable` | boolean | Allow null values (default: false) |
+| `default` | mixed | Default value |
+| `unique` | boolean | Unique constraint (default: false) |
+| `index` | boolean | Add index (default: false) |
+| `foreign` | array | Foreign key definition |
+
+### Relationship Types
+
+- `hasOne`: One-to-one relationship
+- `hasMany`: One-to-many relationship
+- `belongsTo`: Inverse of hasOne/hasMany
+- `belongsToMany`: Many-to-many relationship
+
+## Examples
+
+See the `examples/` directory for complete examples:
+
+- `examples/generate_simple.php` - Basic product resource
+- `examples/generate_blog.php` - Blog with posts and comments
+
+Run examples:
+
 ```bash
-php artisan test
+php examples/generate_simple.php
+php examples/generate_blog.php
 ```
 
-### Database Operations
+Or use the CLI with the comprehensive config:
 
-Reset database with fresh seeded data:
 ```bash
-php artisan migrate:fresh --seed
+php generate.php config.example.php
 ```
 
-View database structure:
-```bash
-php artisan db:show --counts
+## Output Structure
+
+Generated files are organized in Laravel's standard structure:
+
 ```
-
-List all routes:
-```bash
-php artisan route:list
+output/
+├── app/
+│   ├── Http/
+│   │   └── Controllers/
+│   │       ├── PostController.php
+│   │       └── CommentController.php
+│   └── Models/
+│       ├── Post.php
+│       └── Comment.php
+├── database/
+│   ├── migrations/
+│   │   ├── 2024_01_01_000000_create_posts_table.php
+│   │   └── 2024_01_01_000001_create_comments_table.php
+│   └── seeders/
+│       ├── PostSeeder.php
+│       └── CommentSeeder.php
+└── routes/
+    └── api.php
 ```
-
-## Future Development
-
-This is the foundational structure for an agent-native backlog system. Future enhancements will include:
-
-- Execution logic for automated task running
-- Agent integration for autonomous task completion
-- Advanced filtering and querying capabilities
-- Real-time status updates
-- Task dependencies and prerequisites
-- Progress tracking and reporting
-- API endpoints for CRUD operations on all entities
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-
+MIT

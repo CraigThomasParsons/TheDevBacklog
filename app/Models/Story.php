@@ -2,17 +2,32 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class Story extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'epic_id',
         'title',
-        'description',
-        'status',
+        'narrative',
+        'acceptance_criteria',
+        'epic_id',
+        'persona_id',
+        'story_status_id',
+        'story_type',
+        'priority',
+        'est_points',
+    ];
+
+    protected $casts = [
+        'priority' => 'integer',
+        'est_points' => 'integer',
     ];
 
     public function epic(): BelongsTo
@@ -20,8 +35,96 @@ class Story extends Model
         return $this->belongsTo(Epic::class);
     }
 
+    public function persona(): BelongsTo
+    {
+        return $this->belongsTo(Persona::class);
+    }
+
+    public function status(): BelongsTo
+    {
+        return $this->belongsTo(StoryStatus::class, 'story_status_id');
+    }
+
+    public function sprints(): BelongsToMany
+    {
+        return $this->belongsToMany(Sprint::class, 'sprint_stories')
+            ->withPivot('sort_order');
+    }
+
     public function tasks(): HasMany
     {
+        return $this->hasMany(StoryTask::class)->orderBy('sort_order');
+    }
+
+    public function backlogTasks(): HasMany
+    {
         return $this->hasMany(Task::class);
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(StoryComment::class)->latest();
+    }
+
+    public function codeFolders(): HasMany
+    {
+        return $this->hasMany(StoryCodeFolder::class);
+    }
+
+    public function scopeReady(Builder $query): Builder
+    {
+        return $query->whereHas('status', fn ($q) => $q->where('key', 'ready'));
+    }
+
+    public function scopeDone(Builder $query): Builder
+    {
+        return $query->whereHas('status', fn ($q) => $q->where('key', 'done'));
+    }
+
+    public function scopeByStatus(Builder $query, string $statusKey): Builder
+    {
+        return $query->whereHas('status', fn ($q) => $q->where('key', $statusKey));
+    }
+
+    public function scopeInProgress(Builder $query): Builder
+    {
+        return $query->whereHas('status', fn ($q) => $q->where('key', 'in_progress'));
+    }
+
+    public function scopeCompleted(Builder $query): Builder
+    {
+        return $query->whereHas('status', fn ($q) => $q->where('key', 'completed'));
+    }
+
+    public function scopeReadyForDev(Builder $query): Builder
+    {
+        return $query->ready()->orderByDesc('priority')->orderBy('created_at');
+    }
+
+    public function isReady(): bool
+    {
+        return !empty($this->title) 
+            && !empty($this->narrative) 
+            && !empty($this->acceptance_criteria);
+    }
+
+    public function markReady(): bool
+    {
+        if (!$this->isReady()) {
+            return false;
+        }
+
+        $readyStatus = StoryStatus::byKey('ready');
+        if ($readyStatus) {
+            $this->story_status_id = $readyStatus->id;
+            return $this->save();
+        }
+
+        return false;
+    }
+
+    public function isEnabler(): bool
+    {
+        return ($this->story_type ?? 'feature') === 'enabler';
     }
 }

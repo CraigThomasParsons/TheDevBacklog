@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Run;
+use App\Models\Task;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -13,44 +13,40 @@ class RunSeeder extends Seeder
      */
     public function run(): void
     {
-        $runs = [
-            // Runs for completed tasks
+        $createRegForm = Task::where('title', 'Create registration form')->firstOrFail();
+        $emailVerification = Task::where('title', 'Implement email verification')->firstOrFail();
+        $createLoginForm = Task::where('title', 'Create login form')->firstOrFail();
+        $sessionMgmt = Task::where('title', 'Implement session management')->firstOrFail();
+
+        $createRegForm->runs()->createMany([
             [
-                'task_id' => 1,
-                'status' => 'completed',
-                'started_at' => now()->subDays(5),
-                'completed_at' => now()->subDays(4),
-            ],
-            [
-                'task_id' => 2,
-                'status' => 'completed',
-                'started_at' => now()->subDays(3),
-                'completed_at' => now()->subDays(2),
-            ],
-            [
-                'task_id' => 3,
-                'status' => 'completed',
-                'started_at' => now()->subDays(2),
-                'completed_at' => now()->subDay(),
-            ],
-            // Run for in-progress task
-            [
-                'task_id' => 4,
-                'status' => 'in_progress',
-                'started_at' => now()->subHours(3),
-                'completed_at' => null,
-            ],
-            // Additional run attempts
-            [
-                'task_id' => 1,
                 'status' => 'failed',
                 'started_at' => now()->subDays(6),
                 'completed_at' => now()->subDays(6),
             ],
-        ];
+            [
+                'status' => 'completed',
+                'started_at' => now()->subDays(5),
+                'completed_at' => now()->subDays(4),
+            ],
+        ]);
 
-        foreach ($runs as $run) {
-            Run::create($run);
-        }
+        $emailVerification->runs()->create([
+            'status' => 'completed',
+            'started_at' => now()->subDays(3),
+            'completed_at' => now()->subDays(2),
+        ]);
+
+        $createLoginForm->runs()->create([
+            'status' => 'completed',
+            'started_at' => now()->subDays(2),
+            'completed_at' => now()->subDay(),
+        ]);
+
+        $sessionMgmt->runs()->create([
+            'status' => 'in_progress',
+            'started_at' => now()->subHours(3),
+            'completed_at' => null,
+        ]);
     }
 }

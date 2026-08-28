@@ -113,6 +113,25 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        /**
+         * WritersRoom database connection for cross-service story sync
+         * Stories are authored in WritersRoom, then synced to DevBacklog for sprint planning
+         * Uses host.docker.internal to access WritersRoom's MySQL exposed on port 3307
+         */
+        'writersroom' => [
+            'driver' => 'mysql',
+            'host' => env('WRITERSROOM_DB_HOST', 'host.docker.internal'),
+            'port' => env('WRITERSROOM_DB_PORT', '3307'),
+            'database' => env('WRITERSROOM_DB_DATABASE', 'thewritersroom'),
+            'username' => env('WRITERSROOM_DB_USERNAME', 'laravel'),
+            'password' => env('WRITERSROOM_DB_PASSWORD', 'secret'),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+        ],
+
     ],
 
     /*

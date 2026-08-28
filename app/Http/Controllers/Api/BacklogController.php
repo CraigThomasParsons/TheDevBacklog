@@ -17,7 +17,7 @@ class BacklogController extends Controller
     public function index(): JsonResponse
     {
         $epics = Epic::with([
-            'stories.tasks.runs'
+            'stories.backlogTasks.runs'
         ])->get();
 
         return response()->json([

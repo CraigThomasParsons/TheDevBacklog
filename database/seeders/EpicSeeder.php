@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Epic;
+use App\Models\EpicStatus;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -13,21 +14,24 @@ class EpicSeeder extends Seeder
      */
     public function run(): void
     {
+        $activeStatus = EpicStatus::where('key', 'active')->firstOrFail();
+        $backlogStatus = EpicStatus::where('key', 'backlog')->firstOrFail();
+
         $epics = [
             [
                 'title' => 'User Management System',
-                'description' => 'Build complete user management functionality including authentication, authorization, and profile management',
-                'status' => 'in_progress',
+                'summary' => 'Build complete user management functionality including authentication, authorization, and profile management',
+                'epic_status_id' => $activeStatus->id,
             ],
             [
                 'title' => 'Reporting Dashboard',
-                'description' => 'Create comprehensive reporting dashboard with analytics and data visualization',
-                'status' => 'pending',
+                'summary' => 'Create comprehensive reporting dashboard with analytics and data visualization',
+                'epic_status_id' => $backlogStatus->id,
             ],
             [
                 'title' => 'API Integration',
-                'description' => 'Integrate with third-party APIs for extended functionality',
-                'status' => 'pending',
+                'summary' => 'Integrate with third-party APIs for extended functionality',
+                'epic_status_id' => $backlogStatus->id,
             ],
         ];
 
