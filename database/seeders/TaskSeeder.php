@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Story;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class TaskSeeder extends Seeder
@@ -18,7 +17,7 @@ class TaskSeeder extends Seeder
         $passwordReset = Story::where('title', 'Password Reset')->firstOrFail();
         $salesAnalytics = Story::where('title', 'Sales Analytics')->firstOrFail();
 
-        $registration->tasks()->createMany([
+        $registration->backlogTasks()->createMany([
             [
                 'title' => 'Create registration form',
                 'description' => 'Design and implement registration form with validation',
@@ -31,7 +30,7 @@ class TaskSeeder extends Seeder
             ],
         ]);
 
-        $login->tasks()->createMany([
+        $login->backlogTasks()->createMany([
             [
                 'title' => 'Create login form',
                 'description' => 'Design and implement login form',
@@ -49,7 +48,7 @@ class TaskSeeder extends Seeder
             ],
         ]);
 
-        $passwordReset->tasks()->createMany([
+        $passwordReset->backlogTasks()->createMany([
             [
                 'title' => 'Create password reset form',
                 'description' => 'Design password reset request form',
@@ -57,7 +56,7 @@ class TaskSeeder extends Seeder
             ],
         ]);
 
-        $salesAnalytics->tasks()->createMany([
+        $salesAnalytics->backlogTasks()->createMany([
             [
                 'title' => 'Design dashboard layout',
                 'description' => 'Create wireframes and implement base dashboard layout',
