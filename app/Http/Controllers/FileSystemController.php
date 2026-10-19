@@ -2,23 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class FileSystemController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $path = $request->query('path', '/home/craigpar/Code');
+        $codeRoot = realpath((string) config('app.code_root'));
 
-        // Security/Sanity check: Ensure we are within allowed areas if needed.
-        // For local dev tool, we might be lenient, but preventing traversal out of /home/craigpar is good practice.
-        if (!str_starts_with($path, '/home/craigpar')) {
-             $path = '/home/craigpar/Code';
+        if ($codeRoot === false) {
+            return response()->json(['error' => 'Configured code root is invalid.'], 404);
         }
 
-        if (!is_dir($path)) {
-            return response()->json(['error' => 'Invalid directory: ' . $path], 404);
+        $requestedPath = (string) $request->query('path', $codeRoot);
+        $path = realpath($requestedPath);
+
+        // Resolve symlinks before enforcing the boundary so traversal cannot escape the configured root.
+        if ($path === false || ($path !== $codeRoot && ! str_starts_with($path, $codeRoot.DIRECTORY_SEPARATOR))) {
+            return response()->json(['error' => 'Invalid directory: '.$requestedPath], 404);
         }
 
         $directories = [];
@@ -29,7 +31,7 @@ class FileSystemController extends Controller
                 continue;
             }
 
-            $fullPath = rtrim($path, '/') . '/' . $node;
+            $fullPath = rtrim($path, '/').'/'.$node;
 
             if (is_dir($fullPath)) {
                 $directories[] = [
@@ -40,17 +42,17 @@ class FileSystemController extends Controller
         }
 
         // Sort directories alphabetically
-        usort($directories, fn($a, $b) => strcasecmp($a['name'], $b['name']));
+        usort($directories, fn ($firstDirectory, $secondDirectory) => strcasecmp($firstDirectory['name'], $secondDirectory['name']));
 
         // Add parent directory option
         $parentPath = dirname($path);
-        if (str_starts_with($parentPath, '/home/craigpar')) {
-             array_unshift($directories, [
+        if ($path !== $codeRoot) {
+            array_unshift($directories, [
                 'name' => '..',
                 'path' => $parentPath,
             ]);
         }
-        
+
         return response()->json([
             'current_path' => $path,
             'directories' => $directories,

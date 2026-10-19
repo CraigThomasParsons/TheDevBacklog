@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Story;
 use App\Models\StoryCodeFolder;
+use Database\Seeders\StatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
 use Tests\TestCase;
 
 class StoryCodeFolderTest extends TestCase
@@ -14,18 +16,15 @@ class StoryCodeFolderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\StatusSeeder::class);
+        $this->seed(StatusSeeder::class);
     }
 
     public function test_filesystem_browser_api()
     {
-        // Mock directory structure check if possible, or just rely on existing paths.
-        // Since we can't easily mock filesystem in Feature tests without vfsStream (which is tricky with real Controllers),
-        // we'll test the API response structure roughly.
-        // Assuming /home/craigpar/Code exists based on user prompt.
-        
-        $response = $this->getJson(route('filesystem.browse', ['path' => '/home/craigpar/Code']));
-        
+        // Configure the filesystem boundary explicitly so the test is independent of its host machine.
+        Config::set('app.code_root', sys_get_temp_dir());
+        $response = $this->getJson(route('filesystem.browse', ['path' => sys_get_temp_dir()]));
+
         $response->assertStatus(200);
         $response->assertJsonStructure(['current_path', 'directories']);
     }
@@ -38,7 +37,7 @@ class StoryCodeFolderTest extends TestCase
         // We bypass the is_dir check in controller for the test or create it?
         // Controller has: if (!is_dir($validated['folder_path']))
         // We must ensure the path exists.
-        if (!is_dir($folderPath)) {
+        if (! is_dir($folderPath)) {
             mkdir($folderPath, 0777, true);
         }
 
@@ -51,7 +50,7 @@ class StoryCodeFolderTest extends TestCase
             'story_id' => $story->id,
             'folder_path' => $folderPath,
         ]);
-        
+
         rmdir($folderPath); // Cleanup
     }
 
@@ -59,7 +58,7 @@ class StoryCodeFolderTest extends TestCase
     {
         $story = Story::factory()->create();
         $folderPath = '/tmp/some/fake/path/dup';
-        if (!is_dir($folderPath)) {
+        if (! is_dir($folderPath)) {
             mkdir($folderPath, 0777, true);
         }
 

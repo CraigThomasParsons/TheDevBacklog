@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\BacklogController;
 use App\Http\Controllers\Api\MasonChatController;
 use App\Http\Controllers\Api\StoryController;
 use App\Http\Controllers\Api\MasonRunStateController;
@@ -79,6 +80,9 @@ Route::post('/projects/projection-sync', [ProjectProjectionSyncController::class
 
 // ChatProjects pipeline webhooks.
 Route::post('/inception/completed', [InceptionWebhookController::class, 'completed']);
+
+// Backlog hierarchy endpoint.
+Route::get('/backlog', [BacklogController::class, 'index']);
 
 /**
  * Health check endpoint
