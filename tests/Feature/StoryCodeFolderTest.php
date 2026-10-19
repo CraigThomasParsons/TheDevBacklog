@@ -6,6 +6,7 @@ use App\Models\Story;
 use App\Models\StoryCodeFolder;
 use Database\Seeders\StatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
 use Tests\TestCase;
 
 class StoryCodeFolderTest extends TestCase
@@ -20,7 +21,8 @@ class StoryCodeFolderTest extends TestCase
 
     public function test_filesystem_browser_api()
     {
-        // The system temporary directory is available on both developer machines and CI runners.
+        // Configure the filesystem boundary explicitly so the test is independent of its host machine.
+        Config::set('app.code_root', sys_get_temp_dir());
         $response = $this->getJson(route('filesystem.browse', ['path' => sys_get_temp_dir()]));
 
         $response->assertStatus(200);

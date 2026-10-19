@@ -54,6 +54,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'code_root' => env('CODE_ROOT_PATH', '/home/craigpar/Code'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
